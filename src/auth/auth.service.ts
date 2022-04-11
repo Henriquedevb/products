@@ -1,4 +1,10 @@
-import { ForbiddenException, Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  ForbiddenException,
+  HttpCode,
+  Injectable,
+  UnprocessableEntityException,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import * as argon from 'argon2';
@@ -39,7 +45,15 @@ export class AuthService {
     const hash = await argon.hash(dto.password);
 
     try {
-      const user = await this.prismaService.user.create({
+      const user = await this.prismaService.user.findFirst({
+        where: { email: dto.email },
+      });
+
+      if (user) {
+        throw new BadRequestException('Email already exists');
+      }
+
+      const newUser = await this.prismaService.user.create({
         data: {
           email: dto.email,
           password: hash,
@@ -48,8 +62,12 @@ export class AuthService {
         },
       });
 
-      return this.signToken(user.id, user.email);
-    } catch (error) {}
+      return this.signToken(newUser.id, newUser.email);
+    } catch (error) {
+      if (error instanceof BadRequestException) {
+        throw new BadRequestException(error.message);
+      }
+    }
   }
 
   async signIn(dto: AuthDto) {
