@@ -1,4 +1,8 @@
-import { Injectable, UnprocessableEntityException } from '@nestjs/common';
+import {
+  Injectable,
+  UnauthorizedException,
+  UnprocessableEntityException,
+} from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { ProductDto } from './dto/product.dto';
@@ -17,6 +21,16 @@ export class ProductService {
 
       const user_id = user['user_id'];
 
+      const isAuthorizedSeller = await this.prismaService.user.findFirst({
+        where: { id: user_id },
+      });
+
+      if (!isAuthorizedSeller.isAuthorizedSeller) {
+        throw new UnauthorizedException(
+          'You are not authorized to post a product',
+        );
+      }
+
       const product = await this.prismaService.product.create({
         data: {
           userId: user_id,
@@ -28,7 +42,9 @@ export class ProductService {
       });
       return product;
     } catch (error) {
-      throw new UnprocessableEntityException('Erro ao salvar os dados');
+      if (error instanceof UnauthorizedException) {
+        throw new UnauthorizedException(error.message);
+      }
     }
   }
 

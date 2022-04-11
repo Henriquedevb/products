@@ -15,4 +15,11 @@ export class UserService {
     });
     return user;
   }
+
+  async enableUser(id: string) {
+    await this.prismaService.user.updateMany({
+      where: { id },
+      data: { isAuthorizedSeller: true },
+    });
+  }
 }

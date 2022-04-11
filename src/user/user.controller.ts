@@ -1,4 +1,4 @@
-import { Controller, Get } from '@nestjs/common';
+import { Controller, Get, Patch } from '@nestjs/common';
 import { UserService } from './user.service';
 
 @Controller('users')
@@ -8,5 +8,10 @@ export class UserController {
   @Get()
   getAllUsers() {
     return this.usersService.getAll();
+  }
+
+  @Patch('/enable/:id')
+  enableUser(id: string) {
+    return this.usersService.enableUser(id);
   }
 }
