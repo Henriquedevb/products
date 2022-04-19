@@ -1,9 +1,7 @@
 import {
   BadRequestException,
   ForbiddenException,
-  HttpCode,
   Injectable,
-  UnprocessableEntityException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
@@ -22,10 +20,14 @@ export class AuthService {
   async signToken(
     user_id: string,
     email: string,
+    isAuthorizedSeller: boolean,
+    name: string,
   ): Promise<{ access_token: string }> {
     const payload = {
       user_id,
       email,
+      isAuthorizedSeller,
+      name,
     };
 
     const expiresIn: string = this.configService.get('JWT_EXPIRES_IN');
@@ -53,7 +55,7 @@ export class AuthService {
         throw new BadRequestException('Email already exists');
       }
 
-      const newUser = await this.prismaService.user.create({
+      await this.prismaService.user.create({
         data: {
           email: dto.email,
           password: hash,
@@ -61,8 +63,6 @@ export class AuthService {
           lastName: dto.last_name,
         },
       });
-
-      return this.signToken(newUser.id, newUser.email);
     } catch (error) {
       if (error instanceof BadRequestException) {
         throw new BadRequestException(error.message);
@@ -83,6 +83,11 @@ export class AuthService {
 
     if (!pwMatches) throw new ForbiddenException('Credentials incorrect');
 
-    return this.signToken(user.id, user.email);
+    return this.signToken(
+      user.id,
+      user.email,
+      user.isAuthorizedSeller,
+      user.name,
+    );
   }
 }

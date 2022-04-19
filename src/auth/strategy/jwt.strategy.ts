@@ -21,9 +21,21 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
       where: {
         email: payload.email,
       },
+      select: {
+        email: true,
+        isAuthorizedSeller: true,
+        name: true,
+        products: {
+          select: {
+            id: true,
+            price: true,
+            description: true,
+            category: true,
+          },
+        },
+      },
     });
 
-    delete user.password;
     return user;
   }
 }

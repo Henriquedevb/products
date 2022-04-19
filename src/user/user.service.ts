@@ -10,6 +10,7 @@ export class UserService {
       select: {
         email: true,
         name: true,
+        lastName: true,
         products: true,
       },
     });
